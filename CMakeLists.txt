@@ -44,7 +44,11 @@ include_directories(libs/libSocketHandler/src)
 
 ## libs/libProtobufMessages
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/libs/libProtobufMessages/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/libs/libProtobufMessages/)
-execute_process(COMMAND cmd.exe -c "cd ${CMAKE_CURRENT_BINARY_DIR}/libs/libProtobufMessages/ && ./generate.bat")
+if(WIN32)
+	execute_process(COMMAND cmd.exe -c "cd ${CMAKE_CURRENT_BINARY_DIR}/libs/libProtobufMessages/ && ./generate.bat")
+else()
+	execute_process(COMMAND bash -c "cd ${CMAKE_CURRENT_BINARY_DIR}/libs/libProtobufMessages/ && ./generate.sh")
+endif()
 add_subdirectory(libs/libProtobufMessages)
 
 ## thirdParty/cpp-httplib

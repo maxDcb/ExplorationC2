@@ -1,5 +1,8 @@
-add_executable(exec-asemblyWindows "exec-asemblyWindows.cpp")
-target_link_libraries(exec-asemblyWindows ${Donut})
+if(WIN32)
+	add_executable(exec-asemblyWindows "exec-asemblyWindows.cpp")
+	target_link_libraries(exec-asemblyWindows ${Donut})
 
-add_executable(RevShellWindows "RevShellWindows.cpp")
-target_link_libraries(RevShellWindows)
+	add_executable(RevShellWindows "RevShellWindows.cpp")
+	target_link_libraries(RevShellWindows)
+else()
+endif()
