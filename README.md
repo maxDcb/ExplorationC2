@@ -1,6 +1,6 @@
-## ExplorationC2
+# ExplorationC2
 
-# Dependencies:
+## Dependencies:
 
 boost for tcp 
 
@@ -12,7 +12,7 @@ cpp-httplib for http https://github.com/yhirose/cpp-httplib
 git submodule init
 git submodule unpade
 
-# Command and Control
+## Command and Control
 
 Exploration around Command and Control concepts
 - client / server architecture: tcp at first and then http
