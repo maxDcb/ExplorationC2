@@ -2,27 +2,41 @@ cmake_minimum_required(VERSION 3.14.0 FATAL_ERROR)
 
 project(C2 VERSION 0.0.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_FLAGS_RELEASE "/MT")
-set(CMAKE_CXX_FLAGS_DEBUG "/MTd")
+if(WIN32)
+	set(CMAKE_CXX_FLAGS_RELEASE "/MT")
+	set(CMAKE_CXX_FLAGS_DEBUG "/MTd")
+endif()
 
 ## Protobuff
-set(PROTOBUF "C:/Users/CyberVuln/Desktop/Project/protobuf-cpp-3.19.4/protobuf-3.19.4/cmake/build")
-set(Protobuf_USE_STATIC_LIBS ON)
-include(${PROTOBUF}/cmake/protobuf-config.cmake)
-include(${PROTOBUF}/cmake/protobuf-module.cmake)
-include(${PROTOBUF}/cmake/protobuf-options.cmake)
-include(${PROTOBUF}/cmake/protobuf-targets.cmake)
-find_package(Protobuf REQUIRED HINTS ${PROTOBUF})
-include_directories(${Protobuf_INCLUDE_DIRS})
-link_libraries(${Protobuf_LIBRARIES})
+if(WIN32)
+	set(PROTOBUF "C:/Users/CyberVuln/Desktop/Project/protobuf-cpp-3.19.4/protobuf-3.19.4/cmake/build")
+	set(Protobuf_USE_STATIC_LIBS ON)
+	include(${PROTOBUF}/cmake/protobuf-config.cmake)
+	include(${PROTOBUF}/cmake/protobuf-module.cmake)
+	include(${PROTOBUF}/cmake/protobuf-options.cmake)
+	include(${PROTOBUF}/cmake/protobuf-targets.cmake)
+	find_package(Protobuf REQUIRED HINTS ${PROTOBUF})
+	include_directories(${Protobuf_INCLUDE_DIRS})
+	link_libraries(${Protobuf_LIBRARIES})
+else()
+	set(PROTOBUF "/root/project/protobuf-cpp-3.19.4/protobuf-3.19.4/cmake/build")
+	find_package(Protobuf REQUIRED HINTS ${PROTOBUF})
+	include_directories("/root/project/protobuf-cpp-3.19.4/protobuf-3.19.4/src")
+	set(Protobuf_LIBRARIES "/root/project/protobuf-cpp-3.19.4/protobuf-3.19.4/cmake/build/libprotobuf.a")
+endif()
 
 ## Boost
 find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
 ## donut
-include_directories("C:/Users/CyberVuln/Desktop/Project/donut/include")
-set(Donut "C:/Users/CyberVuln/Desktop/Project/donut/lib/donut.lib")
+if(WIN32)
+	include_directories("C:/Users/CyberVuln/Desktop/Project/donut/include")
+	set(Donut "C:/Users/CyberVuln/Desktop/Project/donut/lib/donut.lib")
+else()
+	include_directories("/root/project/donut/include")
+	set(Donut "/root/project/donut/lib/donut.so")
+endif()
 
 ## libs/libSocketHandler
 add_subdirectory(libs/libSocketHandler)
@@ -37,15 +51,26 @@ add_subdirectory(libs/libProtobufMessages)
 add_subdirectory(thirdParty/cpp-httplib)
 include_directories(thirdParty/cpp-httplib)
 
-
-
 ## C2
 add_executable(Beacon "src/Beacon.cpp")
-target_link_libraries(Beacon ${Boost_LIBRARIES} SocketHandler ProtobufMessages)
+if(WIN32)
+	target_link_libraries(Beacon ${Boost_LIBRARIES} SocketHandler ProtobufMessages)
+else()
+	target_link_libraries(Beacon ${Boost_LIBRARIES} SocketHandler ProtobufMessages ${Protobuf_LIBRARIES} pthread)
+endif()
 
 add_executable(CoreC2 "src/CoreC2.cpp")
-target_link_libraries(CoreC2 ${Boost_LIBRARIES} SocketHandler ProtobufMessages)
+if(WIN32)
+	target_link_libraries(CoreC2 ${Boost_LIBRARIES} SocketHandler ProtobufMessages)
+else()
+	target_link_libraries(CoreC2 ${Boost_LIBRARIES} SocketHandler ProtobufMessages ${Protobuf_LIBRARIES} pthread)
+endif()
 
 ## tests
 add_subdirectory(tests)
 
+if(WIN32)
+else()
+	file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/tests DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+	execute_process(COMMAND bash -c "cd ${CMAKE_CURRENT_BINARY_DIR}/tests && ./generate.sh")
+endif()
