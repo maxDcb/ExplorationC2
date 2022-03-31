@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+
+message C2Message {
+
+	string instruction = 1;
+	
+	string shellCmd = 2;
+	
+	string args = 3;
+	
+	string inputFile = 4;
+	string outputFile = 5;
+		
+	bytes data = 6;
+	
+	string returnValue = 7;
+	
+	int64 pidInjection = 8; 
+	
+}
