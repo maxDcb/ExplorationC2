@@ -55,19 +55,35 @@ add_subdirectory(libs/libProtobufMessages)
 add_subdirectory(thirdParty/cpp-httplib)
 include_directories(thirdParty/cpp-httplib)
 
-## C2
-add_executable(Beacon "src/Beacon.cpp")
-if(WIN32)
-	target_link_libraries(Beacon ${Boost_LIBRARIES} SocketHandler ProtobufMessages)
-else()
-	target_link_libraries(Beacon ${Boost_LIBRARIES} SocketHandler ProtobufMessages ${Protobuf_LIBRARIES} pthread)
-endif()
+set(SOURCES_CORE
+	src/CoreC2.cpp
+	src/Listener.cpp
+	src/ListenerTcp.cpp
+	src/ListenerHttp.cpp
+	src/Tools.cpp
+)
 
-add_executable(CoreC2 "src/CoreC2.cpp")
+## C2
+add_executable(CoreC2 ${SOURCES_CORE})
 if(WIN32)
 	target_link_libraries(CoreC2 ${Boost_LIBRARIES} SocketHandler ProtobufMessages)
 else()
 	target_link_libraries(CoreC2 ${Boost_LIBRARIES} SocketHandler ProtobufMessages ${Protobuf_LIBRARIES} pthread)
+endif()
+
+set(SOURCES_BEACON
+	src/BeaconLaucher.cpp
+    src/Beacon.cpp
+	src/BeaconTcp.cpp
+	src/BeaconHttp.cpp
+	src/Tools.cpp
+)
+
+add_executable(BeaconLaucher ${SOURCES_BEACON})
+if(WIN32)
+	target_link_libraries(BeaconLaucher ${Boost_LIBRARIES} SocketHandler ProtobufMessages)
+else()
+	target_link_libraries(BeaconLaucher ${Boost_LIBRARIES} SocketHandler ProtobufMessages ${Protobuf_LIBRARIES} pthread)
 endif()
 
 ## tests
