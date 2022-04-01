@@ -16,6 +16,8 @@
 
 #include "C2Message.pb.h"
 
+#include "Tools.hpp"
+
 
 class Listener
 {
@@ -24,7 +26,7 @@ public:
 	Listener(int idxSession);
 	~Listener();
 
-	int connectSession();
+	virtual void connectSession() {};
 
 protected:
 	virtual void PingPong(C2Message& c2Message, C2Message& c2RetMessage) {};

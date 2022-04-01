@@ -15,12 +15,13 @@ public:
 	ListenerHttp(int idxSession, int localport);
 	~ListenerHttp();
 
+	void connectSession();
+
 private:
 	void lauchHttpServ();
 
-	std::string test(const httplib::Request& req, httplib::Response& res);
-
-	void PingPong(C2Message& c2Message, C2Message& c2RetMessage);
+	std::string setCmd(const httplib::Request& req, httplib::Response& res);
+	std::string getResponse(const httplib::Request& req, httplib::Response& res);
 
 	std::unique_ptr<std::thread> m_httpServ;
 	std::mutex m_mutex;

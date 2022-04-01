@@ -66,7 +66,7 @@ set(SOURCES_CORE
 ## C2
 add_executable(CoreC2 ${SOURCES_CORE})
 if(WIN32)
-	target_link_libraries(CoreC2 ${Boost_LIBRARIES} SocketHandler ProtobufMessages)
+	target_link_libraries(CoreC2 ${Boost_LIBRARIES} SocketHandler ProtobufMessages ${Donut})
 else()
 	target_link_libraries(CoreC2 ${Boost_LIBRARIES} SocketHandler ProtobufMessages ${Protobuf_LIBRARIES} pthread)
 endif()
@@ -81,7 +81,7 @@ set(SOURCES_BEACON
 
 add_executable(BeaconLaucher ${SOURCES_BEACON})
 if(WIN32)
-	target_link_libraries(BeaconLaucher ${Boost_LIBRARIES} SocketHandler ProtobufMessages)
+	target_link_libraries(BeaconLaucher ${Boost_LIBRARIES} SocketHandler ProtobufMessages ${Donut})
 else()
 	target_link_libraries(BeaconLaucher ${Boost_LIBRARIES} SocketHandler ProtobufMessages ${Protobuf_LIBRARIES} pthread)
 endif()

@@ -10,6 +10,8 @@ public:
 	ListenerTcp(int idxSession, int localport);
 	~ListenerTcp();
 
+	void connectSession();
+
 private:
 	void PingPong(C2Message &c2Message, C2Message &c2RetMessage);
 

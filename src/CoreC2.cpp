@@ -85,7 +85,8 @@ int main(int argc, char* argv[])
 		}
 		else if (input == "session")
 		{
-			listeners[0]->connectSession();
+			if(!listeners.empty())
+				listeners[0]->connectSession();
 		}
 		else if (input == "exit")
 			exit = true;

