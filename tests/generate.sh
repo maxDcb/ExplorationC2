@@ -1,6 +1,6 @@
 
 gcc injectLinux.c -o injectLinux
-gcc exec-asemblyLinux.c -o exec-asemblyLinux
+gcc exec-assemblyLinux.c -o exec-assemblyLinux
 gcc dumy.c -o dumy
 
 nasm -f elf64 -o RevShellLinux.o RevShellLinux.nasm

@@ -8,9 +8,9 @@ protobuff for serialisation of commandes & results messages
 
 donut to creat exe loader https://github.com/TheWover/donut
 
-cpp-httplib for http https://github.com/yhirose/cpp-httplib 
-git submodule init
-git submodule unpade
+cpp-httplib for http https://github.com/yhirose/cpp-httplib   
+git submodule init  
+git submodule unpade  
 
 ## Command and Control
 
