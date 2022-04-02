@@ -9,7 +9,7 @@ class BeaconHttp : public Beacon
 {
 
 public:
-	BeaconHttp();
+	BeaconHttp(std::string& ip, int port);
 	~BeaconHttp();
 
 	int runHttp();

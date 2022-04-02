@@ -8,8 +8,8 @@ using namespace std;
 using namespace httplib;
 
 
-BeaconHttp::BeaconHttp()
-	: Beacon()
+BeaconHttp::BeaconHttp(std::string& ip, int port)
+	: Beacon(ip, port)
 {
 }
 
@@ -26,7 +26,7 @@ int BeaconHttp::runHttp()
 	{
 		string cmd;
 
-		httplib::Client cli("localhost", 8080);
+		httplib::Client cli(m_ip, m_port);
 
 		if (auto res = cli.Get("/cmd")) 
 		{

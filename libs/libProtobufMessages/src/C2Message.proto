@@ -14,7 +14,7 @@ message C2Message {
 		
 	bytes data = 6;
 	
-	string returnValue = 7;
+	bytes returnValue = 7;
 	
 	int64 pidInjection = 8; 
 	

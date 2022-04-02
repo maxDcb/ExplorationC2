@@ -27,6 +27,4 @@ private:
 	std::mutex m_mutex;
 
 	std::string m_cmd;
-
-	int m_idxSession;
 };

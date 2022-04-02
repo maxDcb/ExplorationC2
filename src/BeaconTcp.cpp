@@ -5,8 +5,8 @@ using namespace std;
 using boost::asio::ip::tcp;
 
 
-BeaconTcp::BeaconTcp()
-	: Beacon()
+BeaconTcp::BeaconTcp(std::string& ip, int port)
+	: Beacon(ip, port)
 {
 }
 
@@ -18,8 +18,8 @@ BeaconTcp::~BeaconTcp()
 
 int BeaconTcp::runTcp()
 {
-	int remotePort=5555;
-	string remoteHost="127.0.0.1";
+	int remotePort=m_port;
+	string remoteHost=m_ip;
 
 	Client* client_=new Client(remoteHost, remotePort);
 	m_clientsTcp.push_back(client_);

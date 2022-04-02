@@ -16,9 +16,5 @@ private:
 	void PingPong(C2Message &c2Message, C2Message &c2RetMessage);
 
 	boost::asio::io_service m_ioService;
-
-	int m_idxSession;
-
 	std::vector<Server*> m_serversTcp;
-
 };

