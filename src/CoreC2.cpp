@@ -12,12 +12,13 @@ int IdxSession = 0;
 int createlistener(std::vector<std::unique_ptr<Listener>>& listeners)
 {
 	bool exit = false;
+
+	int localPort = 8080;
+	string localHost = "127.0.0.1";
+	string type = "http";
+
 	while (!exit)
 	{
-		int localPort = 8080;
-		string localHost = "127.0.0.1";
-		string type = "http";
-
 		string input;
 		cout << "listener> ";
 		std::getline(std::cin, input);
@@ -38,7 +39,9 @@ int createlistener(std::vector<std::unique_ptr<Listener>>& listeners)
 			}
 			else if (splitedCmd[0] == "set")
 			{
-				if (splitedCmd.size() > 3)
+				std::cout << " splitedCmd[1] " << splitedCmd[1] << std::endl;
+				std::cout << " splitedCmd[2] " << splitedCmd[2] << std::endl;
+				if (splitedCmd.size() == 3)
 				{
 					if (splitedCmd[1] == "type")
 					{
@@ -53,9 +56,10 @@ int createlistener(std::vector<std::unique_ptr<Listener>>& listeners)
 					{
 						localPort = stoi(splitedCmd[2]);
 					}
-					else if (splitedCmd[1] == "LPORT")
+					else if (splitedCmd[1] == "LHOST")
 					{
 						localHost = splitedCmd[2];
+						std::cout << "localHost " << localHost << std::endl;
 					}
 				}
 				else

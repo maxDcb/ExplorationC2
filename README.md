@@ -17,6 +17,6 @@ git submodule unpade
 Exploration around Command and Control concepts
 - client / server architecture: tcp at first and then http
 - run cmd and scripts 
-- exectuion and injection of assembly in windows
+- execution and injection of assembly in windows
 - injection assembler in linux
 
